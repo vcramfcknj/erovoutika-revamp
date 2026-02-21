@@ -1,0 +1,25 @@
+Slide show (Hero Section)
+admin dashboard new color (side bar)--
+Organizational chart about (x)
+Services Section + Animation (Insert Pictures)
+Dashboard & News updates (Card Animations)
+DARK MODE (Toggle)
+Main page ( Feedbacks and Ratings)
+Review Feedbacks and Ratings
+Loading animation ( Log in )
+Password Toggle show hide --
+Add Award ( Form Calendar ) -- 
+Add News ( Form Calendar Date ) -- 
+Log In as ( Position ) to header -- 
+Log out -- 
+Pop Up main article ( News Section )
+Border Navigation Radius
+Scroll Down/ Up Animation
+Upscale Logo Partners ( Academe & industry )
+News Card/ Text Adjust
+Language Translation
+Scheduled Publish --
+
+
+
+ 
