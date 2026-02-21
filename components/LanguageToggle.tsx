@@ -6,6 +6,30 @@ import { LANGUAGES, getLanguageByCode, getPopularLanguages } from '@/lib/i18n/la
 import { Globe, Search, Check } from 'lucide-react'
 import * as flags from 'country-flag-icons/react/3x2'
 
+// ---------------------------
+// Move FlagIcon outside the component
+// ---------------------------
+const FlagIcon = ({ code }: { code: string }) => {
+  const FlagComponent = (flags as Record<string, React.ComponentType<{ className?: string }>>)[code]
+
+  if (!FlagComponent) {
+    return (
+      <div className="w-5 h-4 rounded-sm bg-gray-200 flex items-center justify-center">
+        <span className="text-[8px]">{code}</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-5 h-4 rounded-sm overflow-hidden shrink-0 shadow-sm">
+      <FlagComponent className="w-full h-full object-cover" />
+    </div>
+  )
+}
+
+// ---------------------------
+// LanguageToggle Component
+// ---------------------------
 export function LanguageToggle() {
   const { language, setLanguage } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
@@ -14,10 +38,11 @@ export function LanguageToggle() {
 
   const currentLang = getLanguageByCode(language)
   const popularLanguages = getPopularLanguages()
-  
-  const filteredLanguages = LANGUAGES.filter(lang =>
-    lang.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    lang.nativeName.toLowerCase().includes(searchQuery.toLowerCase())
+
+  const filteredLanguages = LANGUAGES.filter(
+    (lang) =>
+      lang.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lang.nativeName.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   useEffect(() => {
@@ -38,24 +63,6 @@ export function LanguageToggle() {
     setSearchQuery('')
   }
 
-  const FlagIcon = ({ code }: { code: string }) => {
-    const FlagComponent = (flags as any)[code]
-    
-    if (!FlagComponent) {
-      return (
-        <div className="w-5 h-4 rounded-sm bg-gray-200 flex items-center justify-center">
-          <span className="text-[8px]">{code}</span>
-        </div>
-      )
-    }
-    
-    return (
-      <div className="w-5 h-4 rounded-sm overflow-hidden flex-shrink-0 shadow-sm">
-        <FlagComponent className="w-full h-full object-cover" />
-      </div>
-    )
-  }
-
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Toggle Button */}
@@ -70,11 +77,11 @@ export function LanguageToggle() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-[500px] flex flex-col">
+         <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-125 flex flex-col">
           {/* Header */}
           <div className="p-4 border-b border-gray-200">
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Select Language</h3>
-            
+
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -108,9 +115,7 @@ export function LanguageToggle() {
                         <p className="text-sm font-medium text-gray-900">{lang.name}</p>
                         <p className="text-xs text-gray-500">{lang.nativeName}</p>
                       </div>
-                      {language === lang.code && (
-                        <Check className="w-4 h-4 text-orange-600" />
-                      )}
+                      {language === lang.code && <Check className="w-4 h-4 text-orange-600" />}
                     </button>
                   ))}
                 </div>
@@ -127,9 +132,7 @@ export function LanguageToggle() {
                 </p>
               )}
               {filteredLanguages.length === 0 ? (
-                <p className="px-3 py-4 text-sm text-gray-500 text-center">
-                  No languages found
-                </p>
+                <p className="px-3 py-4 text-sm text-gray-500 text-center">No languages found</p>
               ) : (
                 filteredLanguages.map((lang) => (
                   <button
@@ -144,9 +147,7 @@ export function LanguageToggle() {
                       <p className="text-sm font-medium text-gray-900">{lang.name}</p>
                       <p className="text-xs text-gray-500">{lang.nativeName}</p>
                     </div>
-                    {language === lang.code && (
-                      <Check className="w-4 h-4 text-orange-600" />
-                    )}
+                    {language === lang.code && <Check className="w-4 h-4 text-orange-600" />}
                   </button>
                 ))
               )}
@@ -155,9 +156,7 @@ export function LanguageToggle() {
 
           {/* Footer */}
           <div className="p-3 border-t border-gray-200 bg-gray-50 rounded-b-xl">
-            <p className="text-xs text-gray-500 text-center">
-              Powered by Google Translate
-            </p>
+            <p className="text-xs text-gray-500 text-center">Powered by Google Translate</p>
           </div>
         </div>
       )}

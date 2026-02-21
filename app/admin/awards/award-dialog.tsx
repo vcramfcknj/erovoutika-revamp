@@ -160,9 +160,10 @@ export function AwardDialog({ open, onOpenChange, award, onSuccess }: AwardDialo
 
       onSuccess()
       onOpenChange(false)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving award:', error)
-      alert(error.message || 'Failed to save award')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save award'
+      alert(errorMessage)
     } finally {
       setIsLoading(false)
       setUploadingImage(false)

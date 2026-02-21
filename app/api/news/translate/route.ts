@@ -30,10 +30,11 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(data || [])
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching/translating news:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
     return NextResponse.json(
-      { error: 'Failed to fetch news', details: error.message },
+      { error: 'Failed to fetch news', details: errorMessage },
       { status: 500 }
     )
   }

@@ -14,16 +14,23 @@ const ThemeContext = createContext<ThemeContextType>({
   toggleTheme: () => {},
 })
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light')
+// ---------------------------
+// Lazy initializer fixes the setState-in-effect issue
+// ---------------------------
+function getInitialTheme(): Theme {
+  if (typeof window === 'undefined') return 'light' // SSR safety
+  const saved = localStorage.getItem('theme') as Theme | null
+  if (saved) return saved
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
 
-  // On mount, read saved preference or system preference
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<Theme>(getInitialTheme)
+
+  // Keep <html> class in sync when theme changes
   useEffect(() => {
-    const saved = localStorage.getItem('theme') as Theme | null
-    const preferred = saved ?? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-    setTheme(preferred)
-    document.documentElement.classList.toggle('dark', preferred === 'dark')
-  }, [])
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
 
   const toggleTheme = () => {
     const next: Theme = theme === 'light' ? 'dark' : 'light'

@@ -22,7 +22,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Upload, X, Link as LinkIcon, Send, Clock, AlertCircle, FileText } from 'lucide-react'
 import Image from 'next/image'
-import { NewsItem } from '@/types/news';
 
 type NewsItem = {
   id?: string
@@ -256,7 +255,7 @@ function NewsDialog({ open, onOpenChange, news, onSuccess }: NewsDialogProps) {
 
         {errorMessage && (
           <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
             <p className="text-sm text-red-800">{errorMessage}</p>
           </div>
         )}

@@ -46,7 +46,7 @@ type NewsItem = {
   category: string
   date: string
   image_url: string | null
-  url: string | null
+  url: string | undefined
   is_published: boolean
   scheduled_date: string | null
   created_at: string

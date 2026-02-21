@@ -58,7 +58,7 @@ export function About() {
                 </div>
               </div>
 
-              <Button size="lg" asChild className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-orange-600 hover:to-orange-700 text-white rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all">
+              <Button size="lg" asChild className="bg-linear-to-r from-blue-600 to-blue-700 hover:from-orange-600 hover:to-orange-700 text-white rounded-full px-10 py-6 text-lg shadow-lg hover:shadow-xl transition-all">
                 <Link href="#contact">{t.about.getInTouch}</Link>
               </Button>
             </div>

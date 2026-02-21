@@ -147,9 +147,10 @@ export function PartnerDialog({ open, onOpenChange, partner, onSuccess }: Partne
 
       onSuccess()
       onOpenChange(false)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error saving partner:', error)
-      alert(error.message || 'Failed to save partner')
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save partner'
+      alert(errorMessage)
     } finally {
       setIsLoading(false)
       setUploadingImage(false)
