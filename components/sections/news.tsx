@@ -14,7 +14,7 @@ type NewsItem = {
   category: string
   date: string
   image_url: string | null
-  url: string | null
+  url?: string | null   // <-- make it optional and nullable
 }
 
 const container = {
@@ -163,8 +163,7 @@ function NewsModal({
 
               {news.url && (
                 <div className="mt-8">
-                  <a
-                    href={news.url}
+                  <a href={news.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-orange-600 text-white font-semibold text-sm hover:bg-orange-700 transition-colors group"
