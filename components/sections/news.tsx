@@ -6,16 +6,16 @@ import { useEffect, useState, useCallback } from 'react'
 import { useLanguage } from '@/lib/i18n/languageContext'
 import Image from 'next/image'
 
-type NewsItem = {
-  id: string
-  title: string
-  excerpt: string
-  content: string | null
-  category: string
-  date: string
-  image_url: string | null
-  url?: string | null   // <-- make it optional and nullable
-}
+export type NewsItem = {
+  id: string;
+  title: string;
+  excerpt: string;
+  content?: string | null;
+  category: string;
+  date: string;
+  image_url?: string | null;
+  url?: string | null;
+};
 
 const container = {
   hidden: { opacity: 0 },

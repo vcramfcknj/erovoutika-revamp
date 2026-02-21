@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Upload, X, Link as LinkIcon, Send, Clock, AlertCircle, FileText } from 'lucide-react'
 import Image from 'next/image'
+import { NewsItem } from '@/types/news';
 
 type NewsItem = {
   id?: string
