@@ -16,6 +16,7 @@ import {
   ChevronDown
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,67 +37,48 @@ import {
 } from "@/components/ui/alert-dialog"
 
 const navigation = [
-  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { name: 'News & Updates', href: '/admin/news', icon: Newspaper },
-  { name: 'Awards', href: '/admin/awards', icon: Award },
-  { name: 'Partners', href: '/admin/partners', icon: Users },
-  { name: 'Contact Messages', href: '/admin/messages', icon: Mail },
+  { name: 'Dashboard',         href: '/admin',           icon: LayoutDashboard },
+  { name: 'News & Updates',    href: '/admin/news',      icon: Newspaper },
+  { name: 'Awards',            href: '/admin/awards',    icon: Award },
+  { name: 'Partners',          href: '/admin/partners',  icon: Users },
+  { name: 'Contact Messages',  href: '/admin/messages',  icon: Mail },
 ]
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const router = useRouter()
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router   = useRouter()
   const pathname = usePathname()
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [isLoading,        setIsLoading]        = useState(true)
+  const [isSidebarOpen,    setIsSidebarOpen]    = useState(false)
+  const [userEmail,        setUserEmail]        = useState<string | null>(null)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
 
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session) {
-        router.push('/')
-        return
-      }
-
+      if (!session) { router.push('/'); return }
       setUserEmail(session.user.email || null)
       setIsLoading(false)
     }
-
     checkUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        window.location.href = '/'
-      }
+      if (!session) window.location.href = '/'
     })
-
     return () => subscription.unsubscribe()
   }, [router])
 
   const handleLogout = async () => {
     setShowLogoutDialog(false)
-    
-    try {
-      await supabase.auth.signOut()
-    } catch (error) {
-      console.error('Logout error:', error)
-    }
-    
+    try { await supabase.auth.signOut() } catch (e) { console.error('Logout error:', e) }
     window.location.href = '/'
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading...</p>
+          <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-400 dark:text-slate-500">Loading...</p>
         </div>
       </div>
     )
@@ -106,7 +88,7 @@ export default function AdminLayout({
     <>
       {/* Mobile overlay */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
           onClick={() => setIsSidebarOpen(false)}
         />
@@ -114,35 +96,37 @@ export default function AdminLayout({
 
       {/* Sidebar */}
       <aside className={`
-        fixed top-0 left-0 z-50 h-screen w-72 bg-linear-to-b from-slate-900 via-slate-800 to-slate-900 border-r border-slate-700/50
-        transform transition-transform duration-300 ease-in-out shadow-2xl
+        fixed top-0 left-0 z-50 h-screen w-72 shadow-2xl
+        bg-white dark:bg-gradient-to-b dark:from-slate-900 dark:via-slate-800 dark:to-slate-900
+        border-r border-gray-200 dark:border-slate-700/50
+        transform transition-transform duration-300 ease-in-out
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0
       `}>
         <div className="flex flex-col h-full">
-          {/* Logo Section */}
-          <div className="flex items-center justify-between h-20 px-6 border-b border-slate-700/50 bg-slate-900/50">
-            <Image 
-              src="/erovoutika-logo.png" 
-              alt="Erovoutika" 
-              width={140} 
+
+          {/* Logo */}
+          <div className="flex items-center justify-between h-20 px-6 border-b border-gray-200 dark:border-slate-700/50 bg-gray-50 dark:bg-slate-900/50">
+            <Image
+              src="/erovoutika-logo.png"
+              alt="Erovoutika"
+              width={140}
               height={45}
-              className="h-20 w-auto brightness-0 invert"
+              className="h-20 w-auto dark:brightness-0 dark:invert"
             />
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(false)}
-              className="lg:hidden p-2 hover:bg-slate-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+              className="lg:hidden p-2 rounded-lg transition-colors text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-slate-800"
             >
               <Menu className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Navigation */}
+          {/* Nav */}
           <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
-              const Icon = item.icon
+              const Icon     = item.icon
               const isActive = pathname === item.href
-
               return (
                 <Link
                   key={item.name}
@@ -151,27 +135,27 @@ export default function AdminLayout({
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
                     ${isActive
-                      ? 'bg-linear-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30'
-                      : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'
+                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800/50 dark:hover:text-white'
                     }
                   `}
                 >
                   <Icon className="w-5 h-5 shrink-0" />
                   <span className="font-medium">{item.name}</span>
                   {isActive && (
-                    <span className="ml-auto w-2 h-2 bg-white rounded-full shrink-0 animate-pulse"></span>
+                    <span className="ml-auto w-2 h-2 bg-white rounded-full shrink-0 animate-pulse" />
                   )}
                 </Link>
               )
             })}
           </nav>
 
-          {/* Logout Button */}
-          <div className="p-4 border-t border-slate-700/50 bg-slate-900/50">
-            <Button 
+          {/* Logout */}
+          <div className="p-4 border-t border-gray-200 dark:border-slate-700/50 bg-gray-50 dark:bg-slate-900/50">
+            <Button
               onClick={() => setShowLogoutDialog(true)}
               variant="outline"
-              className="w-full justify-start text-red-400 border-red-900/50 hover:bg-red-950 hover:text-red-300 hover:border-red-800 bg-slate-800/50"
+              className="w-full justify-center text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 hover:border-red-300 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-950 dark:hover:text-red-300 dark:hover:border-red-800 dark:bg-slate-800/50"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Logout
@@ -180,48 +164,53 @@ export default function AdminLayout({
         </div>
       </aside>
 
-      {/* Main Content */}
-      <div className="lg:pl-72 min-h-screen bg-gray-50">
+      {/* Main content */}
+      <div className="lg:pl-72 min-h-screen bg-gray-50 dark:bg-[#050A14] transition-colors duration-200">
+
         {/* Header */}
-        <header className="sticky top-0 z-30 h-20 bg-white border-b border-gray-200 shadow-sm">
+        <header className="sticky top-0 z-30 h-20 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700/60 shadow-sm transition-colors duration-200">
           <div className="flex items-center justify-between h-full px-6">
+
             {/* Mobile menu button */}
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden p-2 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors"
+              className="lg:hidden p-2 hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:text-orange-600 rounded-lg transition-colors text-gray-600 dark:text-slate-400"
             >
               <Menu className="w-6 h-6" />
             </button>
 
-            {/* Page title - hidden on mobile */}
-            <div className="hidden lg:block">
-            </div>
+            <div className="hidden lg:block" />
 
-            {/* User dropdown */}
-            <div className="flex items-center gap-4 ml-auto">
+            {/* Right side: theme toggle + user */}
+            <div className="flex items-center gap-3 ml-auto">
+
+              {/* Theme toggle */}
+              <ThemeToggle />
+
+              {/* User dropdown */}
               <DropdownMenu>
-                <DropdownMenuTrigger className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none">
-                  <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center">
+                <DropdownMenuTrigger className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none">
+                  <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-semibold text-sm">
                       {userEmail?.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div className="text-left hidden md:block">
-                    <p className="text-sm font-medium text-gray-900">Admin</p>
-                    <p className="text-xs text-gray-500 truncate max-w-37.5">{userEmail}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-slate-100">Admin</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 truncate max-w-[150px]">{userEmail}</p>
                   </div>
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                  <ChevronDown className="w-4 h-4 text-gray-500 dark:text-slate-400" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56 dark:bg-slate-800 dark:border-slate-700">
                   <DropdownMenuLabel>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Logged in as</p>
-                      <p className="text-xs text-gray-500 truncate">{userEmail}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-slate-100">Logged in as</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 truncate">{userEmail}</p>
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="dark:border-slate-700" />
                   <DropdownMenuItem
-                    className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                    className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30 cursor-pointer"
                     onClick={() => setShowLogoutDialog(true)}
                   >
                     <LogOut className="w-4 h-4 mr-2" />
@@ -233,27 +222,26 @@ export default function AdminLayout({
           </div>
         </header>
 
-        {/* Page Content */}
+        {/* Page content */}
         <main className="p-6">
           {children}
         </main>
       </div>
 
-      {/* Logout Dialog */}
+      {/* Logout dialog */}
       <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="dark:bg-slate-800 dark:border-slate-700">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="dark:text-slate-100">Are you sure you want to logout?</AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-slate-400">
               You will be redirected to the homepage and need to login again to access the admin dashboard.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700"
-            >
+            <AlertDialogCancel className="dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-600">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white">
               Logout
             </AlertDialogAction>
           </AlertDialogFooter>

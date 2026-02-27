@@ -2,129 +2,175 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
-import { Menu, X, ShoppingCart, GraduationCap, Bot } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Menu, X, ShoppingCart } from 'lucide-react'
 import { SITE_CONFIG } from '@/lib/constants'
 import { usePathname } from 'next/navigation'
-import { supabase } from '@/lib/supabase/client'
 import { LanguageToggle } from '@/components/LanguageToggle'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { useLanguage } from '@/lib/i18n/languageContext'
+import { motion, useMotionValueEvent, useScroll } from 'framer-motion'
+
+function useIsDarkModeClass() {
+  const [isDark, setIsDark] = useState(false)
+
+  useEffect(() => {
+    const root = document.documentElement
+
+    const sync = () => setIsDark(root.classList.contains('dark'))
+    sync()
+
+    const obs = new MutationObserver(sync)
+    obs.observe(root, { attributes: true, attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+
+  return isDark
+}
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
   const pathname = usePathname()
   const { t } = useLanguage()
+  const isDark = useIsDarkModeClass()
 
+  const { scrollY } = useScroll()
 
-  const getIcon = (iconType?: string) => {
-    if (iconType === 'graduation') return <GraduationCap className="w-4 h-4 mr-1.5" />
-    if (iconType === 'bot') return <Bot className="w-4 h-4 mr-1.5" />
-    return null
-  }
+  useMotionValueEvent(scrollY, 'change', (latest) => {
+    setScrolled(latest > 18)
+  })
+
+  useEffect(() => {
+    // Close mobile menu when route changes
+    setIsMenuOpen(false)
+  }, [pathname])
 
   const handleClick = (href: string) => {
     if (href.startsWith('#')) {
       const element = document.querySelector(href)
-      if (element) element.scrollIntoView({ behavior: 'smooth' })
+      if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
   }
 
-  const handleLogoClick = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+  const handleLogoClick = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
-  const regularNav = SITE_CONFIG.navigation.filter(item => !item.highlight)
-  const highlightedNav = SITE_CONFIG.navigation.filter(item => item.highlight)
+  const regularNav = useMemo(
+    () => SITE_CONFIG.navigation.filter((item) => !item.highlight),
+    []
+  )
+
+  const variants = useMemo(() => {
+    const topBg = 'rgba(255,255,255,0)'
+    const topBorder = 'rgba(0,0,0,0)'
+    const topShadow = '0 0 0 rgba(0,0,0,0)'
+
+    const scrolledBg = isDark ? 'rgba(17,24,39,0.72)' : 'rgba(255,255,255,0.82)'
+    const scrolledBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'
+    const scrolledShadow = isDark
+      ? '0 10px 30px rgba(0,0,0,0.45)'
+      : '0 10px 30px rgba(0,0,0,0.10)'
+
+    return {
+      top: {
+        backgroundColor: topBg,
+        borderColor: topBorder,
+        boxShadow: topShadow,
+        backdropFilter: 'blur(0px)',
+        height: 80,
+      },
+      scrolled: {
+        backgroundColor: scrolledBg,
+        borderColor: scrolledBorder,
+        boxShadow: scrolledShadow,
+        backdropFilter: 'blur(14px)',
+        height: 72,
+      },
+    }
+  }, [isDark])
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 shadow-sm transition-colors duration-200">
+    <motion.header
+      animate={scrolled ? 'scrolled' : 'top'}
+      variants={variants}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+      className="sticky top-0 z-50 w-full border-b"
+      style={{ willChange: 'background-color, backdrop-filter, height, box-shadow, border-color' }}
+    >
       <div className="container mx-auto px-6">
-        <div className="flex h-20 items-center justify-between">
-
+        <div className="flex items-center justify-between" style={{ height: '100%' }}>
           {/* Logo */}
-          <button onClick={handleLogoClick} className="flex items-center cursor-pointer">
+          <button
+            onClick={handleLogoClick}
+            className="flex items-center gap-3 cursor-pointer group py-2"
+            aria-label="Go to top"
+          >
             <Image
               src="/erovoutika-logo.png"
               alt="Erovoutika Logo"
               width={160}
               height={50}
-              className="h-20 w-auto dark:brightness-0 dark:invert"
+              className="h-16 w-auto group-hover:opacity-85 transition-opacity duration-200"
               priority
             />
+            <span className="hidden xl:block text-[10px] font-mono uppercase tracking-[0.18em] text-gray-500 dark:text-slate-400 border-l border-gray-200/70 dark:border-gray-700/70 pl-3 leading-tight">
+              Robotics &<br />Automation
+            </span>
           </button>
 
-          {/* Desktop Navigation */}
+          {/* Desktop nav */}
           <div className="hidden lg:flex items-center gap-6">
             <nav className="flex items-center gap-1">
               {regularNav.map((item) => {
+                const base =
+                  'px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200'
+                const colors =
+                  'text-gray-700 dark:text-gray-200 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50/70 dark:hover:bg-orange-950/30'
+
                 if (item.href.startsWith('#')) {
                   return (
                     <button
                       key={item.name}
                       onClick={() => handleClick(item.href)}
-                      className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/40 rounded-lg transition-all duration-200"
+                      className={`${base} ${colors}`}
                     >
                       {item.name}
                     </button>
                   )
-                } else {
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/40 rounded-lg transition-all duration-200"
-                    >
-                      {item.name}
-                    </Link>
-                  )
                 }
-              })}
-            </nav>
 
-            <div className="h-8 w-px bg-gray-200 dark:bg-gray-700" />
-
-            <nav className="flex items-center gap-1">
-              {highlightedNav.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="relative px-5 py-2 text-sm font-medium transition-all duration-200 rounded-lg text-blue-600 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-orange-50 hover:to-orange-100 hover:text-orange-600 dark:from-blue-950/40 dark:to-purple-950/40 dark:text-blue-400 dark:hover:from-orange-950/40 dark:hover:to-orange-900/40 dark:hover:text-orange-400"
-                >
-                  <span className="flex items-center">
-                    {getIcon(item.icon)}
+                return (
+                  <Link key={item.name} href={item.href} className={`${base} ${colors}`}>
                     {item.name}
-                  </span>
-                </a>
-              ))}
+                  </Link>
+                )
+              })}
             </nav>
           </div>
 
-          {/* Right Side Actions */}
+          {/* Right */}
           <div className="hidden lg:flex items-center gap-2">
             <LanguageToggle />
-            {/* Theme toggle — sits right next to language toggle */}
             <ThemeToggle />
-
             <a
               href="https://shop.erovoutika.ph/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center h-11 px-6 bg-blue-600 hover:bg-orange-600 text-white rounded-full shadow-md hover:shadow-lg transition-all font-medium text-sm"
+              className="inline-flex items-center justify-center h-11 px-6 bg-blue-600 hover:bg-orange-600 text-white rounded-md shadow-md hover:shadow-lg transition-all font-medium text-sm"
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
               Shop Now
             </a>
           </div>
 
-          {/* Mobile: theme toggle + menu button */}
+          {/* Mobile */}
           <div className="lg:hidden flex items-center gap-2">
             <ThemeToggle />
             <button
-              className="p-2 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:text-orange-600 dark:hover:text-orange-400 rounded-lg transition-colors"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-2 hover:bg-orange-50/70 dark:hover:bg-orange-950/30 hover:text-orange-600 dark:hover:text-orange-400 rounded-lg transition-colors"
+              onClick={() => setIsMenuOpen((v) => !v)}
               aria-label="Toggle menu"
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -132,49 +178,43 @@ export function Header() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile menu */}
         {isMenuOpen && (
-          <nav className="lg:hidden py-6 space-y-2 border-t border-gray-100 dark:border-gray-800">
-            {SITE_CONFIG.navigation.map((item) => {
-              const isHighlighted = item.highlight
+          <nav className="lg:hidden py-6 space-y-2 border-t border-gray-200/60 dark:border-gray-700/60">
+            {regularNav.map((item) => {
+              const base =
+                'w-full text-left flex items-center px-4 py-3 text-base font-medium rounded-lg transition-colors'
+              const colors =
+                'text-gray-700 dark:text-gray-200 hover:bg-orange-50/70 dark:hover:bg-orange-950/30 hover:text-orange-600 dark:hover:text-orange-400'
 
               if (item.href.startsWith('#')) {
                 return (
                   <button
                     key={item.name}
-                    onClick={() => { handleClick(item.href); setIsMenuOpen(false) }}
-                    className={`w-full text-left flex items-center px-4 py-3 text-base font-medium rounded-lg transition-colors ${
-                      isHighlighted
-                        ? 'text-blue-600 dark:text-blue-400 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 hover:from-orange-50 hover:to-orange-100 hover:text-orange-600'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:text-orange-600 dark:hover:text-orange-400'
-                    }`}
+                    onClick={() => {
+                      handleClick(item.href)
+                      setIsMenuOpen(false)
+                    }}
+                    className={`${base} ${colors}`}
                   >
-                    {getIcon(item.icon)}
                     {item.name}
                   </button>
                 )
-              } else {
-                return (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`relative flex items-center px-4 py-3 text-base font-medium rounded-lg transition-colors ${
-                      isHighlighted
-                        ? 'text-blue-600 dark:text-blue-400 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/40 dark:to-purple-950/40 hover:from-orange-50 hover:to-orange-100 hover:text-orange-600'
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:text-orange-600 dark:hover:text-orange-400'
-                    }`}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {getIcon(item.icon)}
-                    {item.name}
-                  </a>
-                )
               }
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`${base} ${colors}`}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              )
             })}
 
-            <div className="pt-4">
+            <div className="pt-2">
               <LanguageToggle />
             </div>
 
@@ -182,7 +222,8 @@ export function Header() {
               href="https://shop.erovoutika.ph/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center w-full h-11 px-6 bg-blue-600 hover:bg-orange-600 text-white rounded-lg font-medium text-base mt-4 transition-colors"
+              className="inline-flex items-center justify-center w-full h-11 px-6 bg-blue-600 hover:bg-orange-600 text-white rounded-md font-medium text-base mt-2 transition-colors"
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
               onClick={() => setIsMenuOpen(false)}
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
@@ -191,6 +232,6 @@ export function Header() {
           </nav>
         )}
       </div>
-    </header>
+    </motion.header>
   )
 }
