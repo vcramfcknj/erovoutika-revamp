@@ -1,7 +1,7 @@
 'use client'
 
-import { Outfit } from 'next/font/google'
-const outfit = Outfit({ subsets: ['latin'], weight: ['700'], display: 'swap' })
+import { Barlow_Condensed } from 'next/font/google'
+const barlowCondensed = Barlow_Condensed({ subsets: ['latin'], weight: ['600', '700'], display: 'swap' })
 
 import { Mail, MapPin, Phone, Send, Loader2, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -59,7 +59,7 @@ export function Contact() {
     <section className="py-20 bg-gradient-to-b from-gray-50 to-white dark:from-slate-800 dark:to-slate-900">
       <div className="container mx-auto px-6">
         <div className="max-w-3xl mx-auto text-center mb-20 space-y-6">
-          <h2 className={`text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-slate-100 ${outfit.className}}`}>
+          <h2 className={`text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-slate-100 ${barlowCondensed.className}}`}>
             {t.contact.title}
           </h2>
           <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed">

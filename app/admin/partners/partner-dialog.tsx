@@ -29,7 +29,6 @@ type Partner = {
   description: string | null
   website_url: string | null
   image_url: string | null
-  category: string | null
   type: 'industry' | 'academe'
 }
 
@@ -50,7 +49,6 @@ export function PartnerDialog({ open, onOpenChange, partner, onSuccess }: Partne
     description: null,
     website_url: null,
     image_url: null,
-    category: null,
     type: 'industry',
   })
 
@@ -61,7 +59,6 @@ export function PartnerDialog({ open, onOpenChange, partner, onSuccess }: Partne
         description: partner.description,
         website_url: partner.website_url,
         image_url: partner.image_url,
-        category: partner.category,
         type: partner.type || 'industry',
       })
       setImagePreview(partner.image_url || '')
@@ -71,7 +68,6 @@ export function PartnerDialog({ open, onOpenChange, partner, onSuccess }: Partne
         description: null,
         website_url: null,
         image_url: null,
-        category: null,
         type: 'industry',
       })
       setImagePreview('')
@@ -128,7 +124,6 @@ export function PartnerDialog({ open, onOpenChange, partner, onSuccess }: Partne
         description: formData.description || null,
         website_url: formData.website_url || null,
         image_url: imageUrl || null,
-        category: formData.category || null,
         type: formData.type,
       }
 
@@ -171,24 +166,23 @@ export function PartnerDialog({ open, onOpenChange, partner, onSuccess }: Partne
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-full p-0 gap-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-200">
-          <DialogTitle>{partner ? 'Edit Partner' : 'Add Partner'}</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="max-w-2xl w-full p-0 gap-0 overflow-hidden dark:bg-slate-800 dark:border-slate-700">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-200 dark:border-slate-700">
+          <DialogTitle className="dark:text-slate-100">{partner ? 'Edit Partner' : 'Add Partner'}</DialogTitle>
+          <DialogDescription className="dark:text-slate-400">
             {partner ? 'Update the partner details below.' : 'Fill in the details to add a new partner.'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col">
           <div className="px-6 py-4 space-y-4">
-
             {/* Image + Name/Type Row */}
             <div className="grid grid-cols-2 gap-4">
               {/* Image Upload */}
               <div className="space-y-1.5">
-                <Label className="text-sm">Partner Logo (optional)</Label>
+                <Label className="text-sm dark:text-slate-300">Partner Logo (optional)</Label>
                 {imagePreview ? (
-                  <div className="relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden group">
+                  <div className="relative w-full h-32 bg-gray-100 dark:bg-slate-700 rounded-lg overflow-hidden group">
                     <Image
                       src={imagePreview}
                       alt="Preview"
@@ -204,9 +198,9 @@ export function PartnerDialog({ open, onOpenChange, partner, onSuccess }: Partne
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-orange-50 hover:border-orange-300 transition-colors">
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 dark:border-slate-600 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:bg-slate-900 hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:border-orange-300 transition-colors">
                     <Upload className="w-6 h-6 text-gray-400 mb-1" />
-                    <p className="text-xs text-gray-500 text-center">
+                    <p className="text-xs text-gray-500 dark:text-slate-400 text-center">
                       <span className="font-semibold">Click to upload</span>
                       <br />PNG, JPG up to 5MB
                     </p>
@@ -224,7 +218,7 @@ export function PartnerDialog({ open, onOpenChange, partner, onSuccess }: Partne
               {/* Name + Partner Type stacked */}
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="name" className="text-sm">Partner Name *</Label>
+                  <Label htmlFor="name" className="text-sm dark:text-slate-300">Partner Name *</Label>
                   <Input
                     id="name"
                     name="name"
@@ -233,13 +227,13 @@ export function PartnerDialog({ open, onOpenChange, partner, onSuccess }: Partne
                     required
                     placeholder="e.g., Acme Corporation"
                     disabled={isLoading}
-                    className="h-9 text-sm"
+                    className="h-9 text-sm dark:bg-slate-900 dark:border-slate-600 dark:text-slate-200"
                   />
                 </div>
 
                 {/* Partner Type Dropdown */}
                 <div className="space-y-1.5">
-                  <Label className="text-sm">Partner Type *</Label>
+                  <Label className="text-sm dark:text-slate-300">Partner Type *</Label>
                   <Select
                     value={formData.type}
                     onValueChange={(value: 'industry' | 'academe') =>
@@ -247,10 +241,10 @@ export function PartnerDialog({ open, onOpenChange, partner, onSuccess }: Partne
                     }
                     disabled={isLoading}
                   >
-                    <SelectTrigger className="h-9 text-sm">
+                    <SelectTrigger className="h-9 text-sm dark:bg-slate-900 dark:border-slate-600 dark:text-slate-200">
                       <SelectValue placeholder="Select partner type" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
                       <SelectItem value="industry">
                         <div className="flex items-center gap-2">
                           <Building2 className="w-4 h-4 text-blue-600" />
@@ -259,7 +253,7 @@ export function PartnerDialog({ open, onOpenChange, partner, onSuccess }: Partne
                       </SelectItem>
                       <SelectItem value="academe">
                         <div className="flex items-center gap-2">
-                          <GraduationCap className="w-4 h-4 text-green-600" />
+                          <GraduationCap className="w-4 h-4 text-purple-600" />
                           <span>Academe Partner</span>
                         </div>
                       </SelectItem>
@@ -269,62 +263,49 @@ export function PartnerDialog({ open, onOpenChange, partner, onSuccess }: Partne
               </div>
             </div>
 
-            {/* Category + Website Row */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="category" className="text-sm">Category</Label>
+            {/* Website URL */}
+            <div className="space-y-1.5">
+              <Label htmlFor="website_url" className="text-sm dark:text-slate-300">Website URL</Label>
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
                 <Input
-                  id="category"
-                  name="category"
-                  value={formData.category || ''}
+                  id="website_url"
+                  name="website_url"
+                  type="url"
+                  value={formData.website_url || ''}
                   onChange={handleChange}
-                  placeholder="e.g., Technology, Education"
+                  placeholder="https://example.com"
                   disabled={isLoading}
-                  className="h-9 text-sm"
+                  className="pl-9 h-9 text-sm dark:bg-slate-900 dark:border-slate-600 dark:text-slate-200"
                 />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="website_url" className="text-sm">Website URL</Label>
-                <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
-                  <Input
-                    id="website_url"
-                    name="website_url"
-                    type="url"
-                    value={formData.website_url || ''}
-                    onChange={handleChange}
-                    placeholder="https://example.com"
-                    disabled={isLoading}
-                    className="pl-9 h-9 text-sm"
-                  />
-                </div>
               </div>
             </div>
 
             {/* Description */}
             <div className="space-y-1.5">
-              <Label htmlFor="description" className="text-sm">Description</Label>
+              <Label htmlFor="description" className="text-sm dark:text-slate-300">Description</Label>
               <Textarea
                 id="description"
                 name="description"
                 value={formData.description || ''}
                 onChange={handleChange}
                 placeholder="Brief description of the partner..."
-                rows={2}
+                rows={3}
                 disabled={isLoading}
-                className="text-sm resize-none"
+                className="text-sm resize-none dark:bg-slate-900 dark:border-slate-600 dark:text-slate-200"
               />
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
               size="sm"
+              className="dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300"
             >
               Cancel
             </Button>
@@ -332,7 +313,7 @@ export function PartnerDialog({ open, onOpenChange, partner, onSuccess }: Partne
               type="submit"
               disabled={isLoading || uploadingImage}
               size="sm"
-              className="bg-blue-600 hover:bg-orange-600 transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 transition-colors"
             >
               {uploadingImage ? 'Uploading...' : isLoading ? 'Saving...' : partner ? 'Update' : 'Create'}
             </Button>

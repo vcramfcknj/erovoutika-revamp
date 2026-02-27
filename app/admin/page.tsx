@@ -110,17 +110,17 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { title: 'Total News',         value: stats.totalNews,      change: stats.newsThisMonth,    changeText: 'this month', icon: Newspaper, color: 'blue',   href: '/admin/news' },
-    { title: 'Total Awards',       value: stats.totalAwards,    change: stats.awardsThisMonth,  changeText: 'this month', icon: Award,     color: 'purple', href: '/admin/awards' },
-    { title: 'Total Partners',     value: stats.totalPartners,  change: 0,                      changeText: 'active',     icon: Users,     color: 'green',  href: '/admin/partners' },
-    { title: 'Contact Messages',   value: stats.totalMessages,  change: 0,                      changeText: 'unread',     icon: Mail,      color: 'orange', href: '/admin/messages' },
+    { title: 'Total News',       value: stats.totalNews,     change: stats.newsThisMonth,    changeText: 'this month', icon: Newspaper, color: 'blue',   href: '/admin/news' },
+    { title: 'Total Awards',     value: stats.totalAwards,   change: stats.awardsThisMonth,  changeText: 'this month', icon: Award,     color: 'purple', href: '/admin/awards' },
+    { title: 'Total Partners',   value: stats.totalPartners, change: 0,                      changeText: 'active',     icon: Users,     color: 'green',  href: '/admin/partners' },
+    { title: 'Contact Messages', value: stats.totalMessages, change: 0,                      changeText: 'unread',     icon: Mail,      color: 'orange', href: '/admin/messages' },
   ]
 
   const quickActions = [
-    { title: 'Manage News',     description: 'Create and edit news articles',   icon: Newspaper, href: '/admin/news',     color: 'blue' },
-    { title: 'Manage Awards',   description: 'Add and update awards',           icon: Award,     href: '/admin/awards',   color: 'purple' },
-    { title: 'Manage Partners', description: 'Update partner information',      icon: Users,     href: '/admin/partners', color: 'green' },
-    { title: 'View Messages',   description: 'Form submissions',                icon: Mail,      href: '/admin/messages', color: 'orange' },
+    { title: 'Manage News',     description: 'Create and edit news articles',  icon: Newspaper, href: '/admin/news',     color: 'blue' },
+    { title: 'Manage Awards',   description: 'Add and update awards',          icon: Award,     href: '/admin/awards',   color: 'purple' },
+    { title: 'Manage Partners', description: 'Update partner information',     icon: Users,     href: '/admin/partners', color: 'green' },
+    { title: 'View Messages',   description: 'Form submissions',               icon: Mail,      href: '/admin/messages', color: 'orange' },
   ]
 
   const colorMap: Record<string, { bg: string; darkBg: string; text: string; darkText: string; hover: string; darkHover: string; badge: string; darkBadge: string }> = {

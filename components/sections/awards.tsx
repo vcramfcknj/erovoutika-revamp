@@ -1,7 +1,7 @@
 'use client'
 
-import { Cormorant_Garamond } from 'next/font/google'
-const cormorantGaramond = Cormorant_Garamond({ subsets: ['latin'], weight: ['700'], display: 'swap' })
+import { Barlow_Condensed } from 'next/font/google'
+const barlowCondensed = Barlow_Condensed({ subsets: ['latin'], weight: ['600', '700'], display: 'swap' })
 
 import { Trophy, Star, Calendar, Medal } from 'lucide-react'
 import { motion, Variants } from 'framer-motion'
@@ -84,7 +84,7 @@ export function Awards() {
             <Trophy className="w-4 h-4" />
             {t.awards.badge}
           </div>
-          <h2 className={`text-4xl md:text-5xl font-bold tracking-tight text-gray-900 dark:text-white ${cormorantGaramond.className}`}>
+          <h2 className={`text-4xl md:text-5xl font-bold tracking-tight text-gray-900 dark:text-white ${barlowCondensed.className}`}>
             {t.awards.title}
           </h2>
           <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed max-w-lg mx-auto">

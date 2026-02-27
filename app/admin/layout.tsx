@@ -13,7 +13,10 @@ import {
   Mail, 
   LogOut,
   Menu,
-  ChevronDown
+  ChevronDown,
+  ChevronRight,
+  Building2,
+  GraduationCap
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -37,20 +40,30 @@ import {
 } from "@/components/ui/alert-dialog"
 
 const navigation = [
-  { name: 'Dashboard',         href: '/admin',           icon: LayoutDashboard },
-  { name: 'News & Updates',    href: '/admin/news',      icon: Newspaper },
-  { name: 'Awards',            href: '/admin/awards',    icon: Award },
-  { name: 'Partners',          href: '/admin/partners',  icon: Users },
-  { name: 'Contact Messages',  href: '/admin/messages',  icon: Mail },
+  { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { name: 'News & Updates', href: '/admin/news', icon: Newspaper },
+  { name: 'Awards', href: '/admin/awards', icon: Award },
+  { 
+    name: 'Partners', 
+    href: '/admin/partners', 
+    icon: Users,
+    subItems: [
+      { name: 'All Partners', href: '/admin/partners', icon: Users },
+      { name: 'Industry', href: '/admin/partners/industry', icon: Building2 },
+      { name: 'Academe', href: '/admin/partners/academe', icon: GraduationCap },
+    ]
+  },
+  { name: 'Contact Messages', href: '/admin/messages', icon: Mail },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const router   = useRouter()
+  const router = useRouter()
   const pathname = usePathname()
-  const [isLoading,        setIsLoading]        = useState(true)
-  const [isSidebarOpen,    setIsSidebarOpen]    = useState(false)
-  const [userEmail,        setUserEmail]        = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Partners'])
 
   useEffect(() => {
     const checkUser = async () => {
@@ -71,6 +84,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setShowLogoutDialog(false)
     try { await supabase.auth.signOut() } catch (e) { console.error('Logout error:', e) }
     window.location.href = '/'
+  }
+
+  const toggleExpand = (name: string) => {
+    setExpandedItems(prev => 
+      prev.includes(name) ? prev.filter(i => i !== name) : [...prev, name]
+    )
   }
 
   if (isLoading) {
@@ -104,7 +123,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         lg:translate-x-0
       `}>
         <div className="flex flex-col h-full">
-
           {/* Logo */}
           <div className="flex items-center justify-between h-20 px-6 border-b border-gray-200 dark:border-slate-700/50 bg-gray-50 dark:bg-slate-900/50">
             <Image
@@ -125,27 +143,77 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Nav */}
           <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
-              const Icon     = item.icon
+              const Icon = item.icon
               const isActive = pathname === item.href
+              const hasSubItems = item.subItems && item.subItems.length > 0
+              const isExpanded = expandedItems.includes(item.name)
+
               return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setIsSidebarOpen(false)}
-                  className={`
-                    flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
-                    ${isActive
-                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800/50 dark:hover:text-white'
-                    }
-                  `}
-                >
-                  <Icon className="w-5 h-5 shrink-0" />
-                  <span className="font-medium">{item.name}</span>
-                  {isActive && (
-                    <span className="ml-auto w-2 h-2 bg-white rounded-full shrink-0 animate-pulse" />
+                <div key={item.name}>
+                  {hasSubItems ? (
+                    <>
+                      <button
+                        onClick={() => toggleExpand(item.name)}
+                        className={`
+                          w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm
+                          ${pathname.startsWith(item.href)
+                            ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30'
+                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800/50 dark:hover:text-white'
+                          }
+                        `}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className="w-5 h-5 shrink-0" />
+                          <span className="font-medium">{item.name}</span>
+                        </div>
+                        <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                      </button>
+                      {isExpanded && (
+                        <div className="ml-4 mt-1 space-y-1">
+                          {item.subItems.map((subItem) => {
+                            const SubIcon = subItem.icon
+                            const isSubActive = pathname === subItem.href
+                            return (
+                              <Link
+                                key={subItem.href}
+                                href={subItem.href}
+                                onClick={() => setIsSidebarOpen(false)}
+                                className={`
+                                  flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 text-sm
+                                  ${isSubActive
+                                    ? 'bg-orange-100 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400'
+                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-white'
+                                  }
+                                `}
+                              >
+                                <SubIcon className="w-4 h-4 shrink-0" />
+                                <span className="font-medium">{subItem.name}</span>
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`
+                        flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm
+                        ${isActive
+                          ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-slate-300 dark:hover:bg-slate-800/50 dark:hover:text-white'
+                        }
+                      `}
+                    >
+                      <Icon className="w-5 h-5 shrink-0" />
+                      <span className="font-medium">{item.name}</span>
+                      {isActive && (
+                        <span className="ml-auto w-2 h-2 bg-white rounded-full shrink-0 animate-pulse" />
+                      )}
+                    </Link>
                   )}
-                </Link>
+                </div>
               )
             })}
           </nav>
@@ -155,7 +223,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Button
               onClick={() => setShowLogoutDialog(true)}
               variant="outline"
-              className="w-full justify-center text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 hover:border-red-300 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-950 dark:hover:text-red-300 dark:hover:border-red-800 dark:bg-slate-800/50"
+              className="w-full justify-center text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 hover:border-red-300 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-950 dark:hover:text-red-300 dark:hover:border-red-800 dark:bg-slate-800/50 text-sm"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Logout
@@ -166,12 +234,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Main content */}
       <div className="lg:pl-72 min-h-screen bg-gray-50 dark:bg-[#050A14] transition-colors duration-200">
-
         {/* Header */}
         <header className="sticky top-0 z-30 h-20 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700/60 shadow-sm transition-colors duration-200">
           <div className="flex items-center justify-between h-full px-6">
-
-            {/* Mobile menu button */}
             <button
               onClick={() => setIsSidebarOpen(true)}
               className="lg:hidden p-2 hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:text-orange-600 rounded-lg transition-colors text-gray-600 dark:text-slate-400"
@@ -181,13 +246,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             <div className="hidden lg:block" />
 
-            {/* Right side: theme toggle + user */}
             <div className="flex items-center gap-3 ml-auto">
-
-              {/* Theme toggle */}
               <ThemeToggle />
 
-              {/* User dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors focus:outline-none">
                   <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center">
@@ -222,7 +283,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        {/* Page content */}
         <main className="p-6">
           {children}
         </main>
