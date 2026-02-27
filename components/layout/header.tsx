@@ -169,7 +169,7 @@ export function Header() {
           <div className="lg:hidden flex items-center gap-2">
             <ThemeToggle />
             <button
-              className="p-2 hover:bg-orange-50/70 dark:hover:bg-orange-950/30 hover:text-orange-600 dark:hover:text-orange-400 rounded-lg transition-colors"
+              className="p-2 rounded-lg transition-colors bg-white/85 dark:bg-slate-900/60 border border-gray-200/70 dark:border-gray-700/70 shadow-sm backdrop-blur hover:bg-orange-50/70 dark:hover:bg-orange-950/30 hover:text-orange-600 dark:hover:text-orange-400"
               onClick={() => setIsMenuOpen((v) => !v)}
               aria-label="Toggle menu"
             >
@@ -179,58 +179,58 @@ export function Header() {
         </div>
 
         {/* Mobile menu */}
-        {isMenuOpen && (
-          <nav className="lg:hidden py-6 space-y-2 border-t border-gray-200/60 dark:border-gray-700/60">
-            {regularNav.map((item) => {
-              const base =
-                'w-full text-left flex items-center px-4 py-3 text-base font-medium rounded-lg transition-colors'
-              const colors =
-                'text-gray-700 dark:text-gray-200 hover:bg-orange-50/70 dark:hover:bg-orange-950/30 hover:text-orange-600 dark:hover:text-orange-400'
+{isMenuOpen && (
+  <nav className="lg:hidden py-6 space-y-2 border-t border-gray-200/60 dark:border-gray-700/60 bg-white dark:bg-slate-900 shadow-lg">
+    {regularNav.map((item) => {
+      const base =
+        'w-full text-left flex items-center px-4 py-3 text-base font-medium rounded-lg transition-colors'
+      const colors =
+        'text-gray-700 dark:text-gray-200 hover:bg-orange-50/70 dark:hover:bg-orange-950/30 hover:text-orange-600 dark:hover:text-orange-400'
 
-              if (item.href.startsWith('#')) {
-                return (
-                  <button
-                    key={item.name}
-                    onClick={() => {
-                      handleClick(item.href)
-                      setIsMenuOpen(false)
-                    }}
-                    className={`${base} ${colors}`}
-                  >
-                    {item.name}
-                  </button>
-                )
-              }
+      if (item.href.startsWith('#')) {
+        return (
+          <button
+            key={item.name}
+            onClick={() => {
+              handleClick(item.href)
+              setIsMenuOpen(false)
+            }}
+            className={`${base} ${colors}`}
+          >
+            {item.name}
+          </button>
+        )
+      }
 
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`${base} ${colors}`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item.name}
-                </Link>
-              )
-            })}
+      return (
+        <Link
+          key={item.name}
+          href={item.href}
+          className={`${base} ${colors}`}
+          onClick={() => setIsMenuOpen(false)}
+        >
+          {item.name}
+        </Link>
+      )
+    })}
 
-            <div className="pt-2">
-              <LanguageToggle />
-            </div>
+    <div className="pt-2">
+      <LanguageToggle />
+    </div>
 
-            <a
-              href="https://shop.erovoutika.ph/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center w-full h-11 px-6 bg-blue-600 hover:bg-orange-600 text-white rounded-md font-medium text-base mt-2 transition-colors"
-              style={{ fontFamily: "'DM Sans', sans-serif" }}
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Shop Now
-            </a>
-          </nav>
-        )}
+    <a
+      href="https://shop.erovoutika.ph/"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center justify-center w-full h-11 px-6 bg-blue-600 hover:bg-orange-600 text-white rounded-md font-medium text-base mt-2 transition-colors"
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+      onClick={() => setIsMenuOpen(false)}
+    >
+      <ShoppingCart className="w-4 h-4 mr-2" />
+      Shop Now
+    </a>
+  </nav>
+)}
       </div>
     </motion.header>
   )
