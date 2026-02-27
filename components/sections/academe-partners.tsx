@@ -67,7 +67,10 @@ export function AcademePartners() {
         `/api/partners/translate?lang=${encodeURIComponent(language)}&type=academe`,
         { cache: 'no-store' }
       )
-      if (!res.ok) { setPartners([]); return }
+      if (!res.ok) {
+        setPartners([])
+        return
+      }
       const data = await res.json()
       setPartners(Array.isArray(data) ? data : [])
       setStartIndex(0)
@@ -79,7 +82,9 @@ export function AcademePartners() {
     }
   }
 
-  useEffect(() => { fetchPartners() }, [language])
+  useEffect(() => {
+    fetchPartners()
+  }, [language])
 
   const resetAutoPlay = () => {
     if (autoPlayRef.current) clearInterval(autoPlayRef.current)
@@ -91,7 +96,9 @@ export function AcademePartners() {
 
   useEffect(() => {
     resetAutoPlay()
-    return () => { if (autoPlayRef.current) clearInterval(autoPlayRef.current) }
+    return () => {
+      if (autoPlayRef.current) clearInterval(autoPlayRef.current)
+    }
   }, [partners.length])
 
   const handlePrev = () => {
@@ -112,7 +119,6 @@ export function AcademePartners() {
 
   return (
     <section className="py-24 bg-white dark:bg-[#050A14] relative overflow-hidden">
-      {/* Ambient background glow */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div
           className="absolute -top-32 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full blur-3xl opacity-[0.06] dark:opacity-[0.10]"
@@ -125,7 +131,6 @@ export function AcademePartners() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 relative">
-        {/* ===== HEADING (Awards-style) ===== */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -133,18 +138,17 @@ export function AcademePartners() {
           transition={{ duration: 0.6 }}
           className="max-w-2xl mx-auto text-center mb-16 space-y-4"
         >
-          {/* Badge pill */}
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 text-blue-600 dark:text-blue-400 rounded-full text-sm font-semibold">
             <GraduationCap className="w-4 h-4" />
             {tr('partners.academe.badge', 'Academe Partners')}
           </div>
 
-          {/* Title */}
-          <h2 className={`text-4xl md:text-5xl font-bold tracking-tight text-gray-900 dark:text-white ${cormorantGaramond.className}`}>
+          <h2
+            className={`text-4xl md:text-5xl font-bold tracking-tight text-gray-900 dark:text-white ${cormorantGaramond.className}`}
+          >
             {tr('partners.academe.title', 'Academic Collaborations')}
           </h2>
 
-          {/* Subtitle */}
           <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed max-w-lg mx-auto">
             {tr(
               'partners.academe.subtitle',
@@ -152,7 +156,6 @@ export function AcademePartners() {
             )}
           </p>
 
-          {/* Total count stat */}
           <div className="pt-2 flex flex-col items-center gap-1">
             <span className="text-5xl md:text-6xl font-black text-blue-600 dark:text-blue-400 tabular-nums leading-none">
               {isLoading ? '—' : partners.length}
@@ -163,12 +166,14 @@ export function AcademePartners() {
           </div>
         </motion.div>
 
-        {/* ===== Infinite Carousel ===== */}
         <div className="relative max-w-6xl mx-auto">
           <button
             type="button"
             aria-label="Previous"
-            onClick={() => { handlePrev(); resetAutoPlay() }}
+            onClick={() => {
+              handlePrev()
+              resetAutoPlay()
+            }}
             disabled={partners.length <= itemsPerView}
             className={`absolute -left-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 ${navHoverBorder} ${navHoverBg} rounded-full flex items-center justify-center shadow-md transition-all duration-200 disabled:opacity-20 disabled:cursor-not-allowed`}
           >
@@ -179,7 +184,10 @@ export function AcademePartners() {
             {isLoading ? (
               <div className="flex gap-6 justify-center">
                 {[...Array(itemsPerView)].map((_, i) => (
-                  <div key={i} className="w-[calc(20%-25.6px)] h-52 rounded-2xl bg-gray-100 dark:bg-slate-800 animate-pulse" />
+                  <div
+                    key={i}
+                    className="w-[calc(20%-25.6px)] h-52 rounded-2xl bg-gray-100 dark:bg-slate-800 animate-pulse"
+                  />
                 ))}
               </div>
             ) : partners.length === 0 ? (
@@ -196,19 +204,29 @@ export function AcademePartners() {
                     transition={{ duration: 0.28 }}
                     className="group relative flex-shrink-0 w-[calc(20%-25.6px)] h-52"
                   >
-                    <div className="absolute inset-0 flex items-center justify-center transition-all duration-300 group-hover:opacity-0">
+                    <div className="absolute inset-0 flex items-center justify-center transition-all duration-300 sm:group-hover:opacity-0">
                       {partner.image_url ? (
-                        <div className="relative w-44 h-44">
-                          <Image src={partner.image_url} alt={partner.name} fill sizes="176px" className="object-contain opacity-100" />
+                        <div className="relative w-[clamp(120px,18vw,176px)] h-[clamp(120px,18vw,176px)] shrink-0">
+                          <Image
+                            src={partner.image_url}
+                            alt={partner.name}
+                            fill
+                            sizes="176px"
+                            className="object-contain opacity-100"
+                          />
                         </div>
                       ) : (
-                        <div className={`w-32 h-32 rounded-2xl flex items-center justify-center bg-gradient-to-br ${fallbackBg}`}>
+                        <div
+                          className={`w-32 h-32 rounded-2xl flex items-center justify-center bg-gradient-to-br ${fallbackBg}`}
+                        >
                           <GraduationCap className={`w-12 h-12 ${fallbackIcon}`} />
                         </div>
                       )}
                     </div>
 
-                    <div className={`absolute inset-0 bg-gradient-to-br ${hoverGradient} rounded-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-2xl transform group-hover:scale-105`}>
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-br ${hoverGradient} rounded-2xl opacity-0 sm:group-hover:opacity-100 transition-all duration-300 shadow-2xl transform sm:group-hover:scale-105`}
+                    >
                       <div className="absolute inset-0 flex flex-col p-5 text-white">
                         {partner.category && (
                           <span className="inline-flex self-start items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-white/20 backdrop-blur-sm mb-3">
@@ -218,7 +236,9 @@ export function AcademePartners() {
                         )}
                         <h3 className="text-base font-bold leading-tight mb-3 line-clamp-2">{partner.name}</h3>
                         {partner.description && (
-                          <p className="text-xs leading-relaxed text-white/90 line-clamp-3 flex-1 mb-4">{partner.description}</p>
+                          <p className="text-xs leading-relaxed text-white/90 line-clamp-3 flex-1 mb-4">
+                            {partner.description}
+                          </p>
                         )}
                         {partner.website_url && (
                           <a
@@ -244,7 +264,10 @@ export function AcademePartners() {
           <button
             type="button"
             aria-label="Next"
-            onClick={() => { handleNext(); resetAutoPlay() }}
+            onClick={() => {
+              handleNext()
+              resetAutoPlay()
+            }}
             disabled={partners.length <= itemsPerView}
             className={`absolute -right-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 ${navHoverBorder} ${navHoverBg} rounded-full flex items-center justify-center shadow-md transition-all duration-200 disabled:opacity-20 disabled:cursor-not-allowed`}
           >
