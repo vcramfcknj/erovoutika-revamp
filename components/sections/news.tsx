@@ -97,11 +97,11 @@ function NewsModal({
           initial="hidden"
           animate="show"
           exit="exit"
-          className="relative w-full max-w-4xl bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-2xl flex"
+          className="relative w-full max-w-4xl bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-2xl flex items-stretch"
           onClick={(e) => e.stopPropagation()}
         >
           {news.image_url && (
-            <div className="hidden md:block relative w-80 shrink-0">
+            <div className="hidden md:flex relative w-80 min-w-[320px] shrink-0 self-stretch">
               <Image
                 src={news.image_url}
                 alt={news.title}

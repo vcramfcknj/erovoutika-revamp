@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { 
   Newspaper, 
   Award, 
@@ -11,7 +9,8 @@ import {
   Mail, 
   TrendingUp, 
   ArrowRight,
-  Clock
+  Clock,
+  Activity
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -23,29 +22,43 @@ type Stats = {
   newsThisMonth: number
   awardsThisMonth: number
 }
+type RecentNews  = { id: string; title: string; category: string; created_at: string }
+type RecentAward = { id: string; title: string; year: string;     created_at: string }
 
-type RecentNews = {
-  id: string
-  title: string
-  category: string
-  created_at: string
+// ── Mini sparkline bars ───────────────────────────────────────────────────────
+function MiniSparkline({ color }: { color: string }) {
+  const bars = [0.3, 0.6, 0.45, 0.8, 0.55, 0.9, 0.65, 1, 0.75, 0.5, 0.85, 0.7]
+  return (
+    <div className="flex items-end gap-[2px] h-6" aria-hidden="true">
+      {bars.map((h, i) => (
+        <span key={i} className="inline-block w-[2px] rounded-sm"
+          style={{ height: `${h * 24}px`, background: color, opacity: 0.25 + h * 0.35 }} />
+      ))}
+    </div>
+  )
 }
 
-type RecentAward = {
-  id: string
-  title: string
-  year: string
-  created_at: string
+// ── Mechanical corner brackets ────────────────────────────────────────────────
+function CardCorners({ color }: { color: string }) {
+  const base: React.CSSProperties = {
+    position: 'absolute', width: 10, height: 10,
+    pointerEvents: 'none', zIndex: 2,
+    borderColor: color, borderStyle: 'solid',
+  }
+  return (
+    <>
+      <span style={{ ...base, top: 0,    left:  0, borderWidth: '1.5px 0 0 1.5px' }} />
+      <span style={{ ...base, top: 0,    right: 0, borderWidth: '1.5px 1.5px 0 0' }} />
+      <span style={{ ...base, bottom: 0, left:  0, borderWidth: '0 0 1.5px 1.5px' }} />
+      <span style={{ ...base, bottom: 0, right: 0, borderWidth: '0 1.5px 1.5px 0' }} />
+    </>
+  )
 }
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats>({
-    totalNews: 0,
-    totalAwards: 0,
-    totalPartners: 0,
-    totalMessages: 0,
-    newsThisMonth: 0,
-    awardsThisMonth: 0,
+    totalNews: 0, totalAwards: 0, totalPartners: 0, totalMessages: 0,
+    newsThisMonth: 0, awardsThisMonth: 0,
   })
   const [recentNews,   setRecentNews]   = useState<RecentNews[]>([])
   const [recentAwards, setRecentAwards] = useState<RecentAward[]>([])
@@ -69,20 +82,18 @@ export default function AdminDashboard() {
       const { data: recentNewsData }   = await supabase
         .from('news_updates').select('id, title, category, created_at')
         .order('created_at', { ascending: false }).limit(3)
-
       const { data: recentAwardsData } = await supabase
         .from('awards').select('id, title, year, created_at')
         .order('created_at', { ascending: false }).limit(3)
 
       setStats({
-        totalNews:      newsData?.length     || 0,
-        totalAwards:    awardsData?.length   || 0,
-        totalPartners:  partnersData?.length || 0,
-        totalMessages:  messagesData?.length || 0,
-        newsThisMonth:  newsData?.filter(i => thisMonth(i.created_at)).length   || 0,
+        totalNews:       newsData?.length     || 0,
+        totalAwards:     awardsData?.length   || 0,
+        totalPartners:   partnersData?.length || 0,
+        totalMessages:   messagesData?.length || 0,
+        newsThisMonth:   newsData?.filter(i => thisMonth(i.created_at)).length   || 0,
         awardsThisMonth: awardsData?.filter(i => thisMonth(i.created_at)).length || 0,
       })
-
       setRecentNews(recentNewsData   || [])
       setRecentAwards(recentAwardsData || [])
     } catch (error) {
@@ -104,187 +115,248 @@ export default function AdminDashboard() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative w-12 h-12 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full border-2 border-orange-500/20 border-t-orange-500 animate-spin" />
+            <div className="absolute inset-[5px] rounded-full border border-orange-500/10 border-b-orange-400 animate-spin"
+              style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
+            <div className="w-2 h-2 rounded-full bg-orange-500" />
+          </div>
+          <p className="font-mono text-[10px] tracking-[0.25em] uppercase text-gray-400 dark:text-slate-600 animate-pulse">Loading data...</p>
+        </div>
       </div>
     )
   }
 
   const statCards = [
-    { title: 'Total News',       value: stats.totalNews,     change: stats.newsThisMonth,    changeText: 'this month', icon: Newspaper, color: 'blue',   href: '/admin/news' },
-    { title: 'Total Awards',     value: stats.totalAwards,   change: stats.awardsThisMonth,  changeText: 'this month', icon: Award,     color: 'purple', href: '/admin/awards' },
-    { title: 'Total Partners',   value: stats.totalPartners, change: 0,                      changeText: 'active',     icon: Users,     color: 'green',  href: '/admin/partners' },
-    { title: 'Contact Messages', value: stats.totalMessages, change: 0,                      changeText: 'unread',     icon: Mail,      color: 'orange', href: '/admin/messages' },
+    { title: 'Total News',       value: stats.totalNews,     change: stats.newsThisMonth,    changeText: 'this month', icon: Newspaper, accent: '#3b82f6', cornerColor: 'rgba(59,130,246,0.45)',  href: '/admin/news'     },
+    { title: 'Total Awards',     value: stats.totalAwards,   change: stats.awardsThisMonth,  changeText: 'this month', icon: Award,     accent: '#a855f7', cornerColor: 'rgba(168,85,247,0.45)', href: '/admin/awards'   },
+    { title: 'Total Partners',   value: stats.totalPartners, change: 0,                      changeText: 'active',     icon: Users,     accent: '#22c55e', cornerColor: 'rgba(34,197,94,0.45)',  href: '/admin/partners' },
+    { title: 'Contact Messages', value: stats.totalMessages, change: 0,                      changeText: 'unread',     icon: Mail,      accent: '#f97316', cornerColor: 'rgba(249,115,22,0.45)', href: '/admin/messages' },
   ]
 
   const quickActions = [
-    { title: 'Manage News',     description: 'Create and edit news articles',  icon: Newspaper, href: '/admin/news',     color: 'blue' },
-    { title: 'Manage Awards',   description: 'Add and update awards',          icon: Award,     href: '/admin/awards',   color: 'purple' },
-    { title: 'Manage Partners', description: 'Update partner information',     icon: Users,     href: '/admin/partners', color: 'green' },
-    { title: 'View Messages',   description: 'Form submissions',               icon: Mail,      href: '/admin/messages', color: 'orange' },
+    { title: 'News & Updates', description: 'Create and edit news articles', icon: Newspaper, href: '/admin/news',     accent: '#3b82f6', cornerColor: 'rgba(59,130,246,0.35)'  },
+    { title: 'Awards',         description: 'Add and update award entries',  icon: Award,     href: '/admin/awards',   accent: '#a855f7', cornerColor: 'rgba(168,85,247,0.35)' },
+    { title: 'Partners',       description: 'Update partner information',    icon: Users,     href: '/admin/partners', accent: '#22c55e', cornerColor: 'rgba(34,197,94,0.35)'  },
+    { title: 'Messages',       description: 'Review form submissions',       icon: Mail,      href: '/admin/messages', accent: '#f97316', cornerColor: 'rgba(249,115,22,0.35)' },
   ]
 
-  const colorMap: Record<string, { bg: string; darkBg: string; text: string; darkText: string; hover: string; darkHover: string; badge: string; darkBadge: string }> = {
-    blue:   { bg: 'bg-blue-50',   darkBg: 'dark:bg-blue-950/30',   text: 'text-blue-600',   darkText: 'dark:text-blue-400',   hover: 'hover:bg-blue-100',   darkHover: 'dark:hover:bg-blue-900/40',   badge: 'bg-blue-50 text-blue-700',     darkBadge: 'dark:bg-blue-950/40 dark:text-blue-300' },
-    purple: { bg: 'bg-purple-50', darkBg: 'dark:bg-purple-950/30', text: 'text-purple-600', darkText: 'dark:text-purple-400', hover: 'hover:bg-purple-100', darkHover: 'dark:hover:bg-purple-900/40', badge: 'bg-purple-50 text-purple-700', darkBadge: 'dark:bg-purple-950/40 dark:text-purple-300' },
-    green:  { bg: 'bg-green-50',  darkBg: 'dark:bg-green-950/30',  text: 'text-green-600',  darkText: 'dark:text-green-400',  hover: 'hover:bg-green-100',  darkHover: 'dark:hover:bg-green-900/40',  badge: 'bg-green-50 text-green-700',   darkBadge: 'dark:bg-green-950/40 dark:text-green-300' },
-    orange: { bg: 'bg-orange-50', darkBg: 'dark:bg-orange-950/30', text: 'text-orange-600', darkText: 'dark:text-orange-400', hover: 'hover:bg-orange-100', darkHover: 'dark:hover:bg-orange-900/40', badge: 'bg-orange-50 text-orange-700', darkBadge: 'dark:bg-orange-950/40 dark:text-orange-300' },
-  }
-
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
 
-      {/* Header */}
-      <div>
-        <p className="text-gray-600 dark:text-slate-400 mt-2">
-          Welcome back! Here&apos;s what&apos;s happening with your site.
-        </p>
+      {/* ── Page header ── */}
+      <div className="flex items-end justify-between">
+        <div>
+          <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-gray-400 dark:text-slate-600 mb-2">Control Panel</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100 tracking-tight">Dashboard</h1>
+          <p className="text-sm text-gray-500 dark:text-slate-600 mt-1">Overview of site content and activity.</p>
+        </div>
+        <div className="hidden md:flex items-center gap-2 font-mono text-[9px] tracking-widest text-gray-400 dark:text-slate-700 uppercase">
+          <Activity className="w-3 h-3 text-orange-500/60" />
+          <span>Systems Normal</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+        </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* ── Stat cards ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat) => {
           const Icon = stat.icon
-          const c    = colorMap[stat.color]
           return (
-            <Card key={stat.title} className="hover:shadow-lg transition-shadow dark:bg-slate-800/60 dark:border-slate-700/60">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 dark:text-slate-400">
-                  {stat.title}
-                </CardTitle>
-                <div className={`w-10 h-10 rounded-lg ${c.bg} ${c.darkBg} flex items-center justify-center`}>
-                  <Icon className={`w-5 h-5 ${c.text} ${c.darkText}`} />
+            <Link key={stat.title} href={stat.href}>
+              <div className="relative group cursor-pointer p-5 transition-all duration-200 hover:-translate-y-0.5
+                bg-white dark:bg-[#0d1526]
+                border border-gray-200 dark:border-white/[0.07]
+                hover:border-gray-300 dark:hover:border-white/[0.12]
+                shadow-sm dark:shadow-none">
+                <CardCorners color={stat.cornerColor} />
+
+                {/* Top row */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-9 h-9 flex items-center justify-center rounded-sm"
+                    style={{ background: `${stat.accent}15`, border: `1px solid ${stat.accent}30` }}>
+                    <Icon className="w-4 h-4" style={{ color: stat.accent }} />
+                  </div>
+                  <MiniSparkline color={stat.accent} />
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-gray-900 dark:text-slate-100">{stat.value}</div>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className={`inline-flex items-center gap-1 text-sm ${c.text} ${c.darkText}`}>
-                    <TrendingUp className="w-4 h-4" />
-                    {stat.change}
+
+                {/* Value */}
+                <div className="mb-3">
+                  <span className="text-4xl font-bold tabular-nums leading-none text-gray-900 dark:text-slate-100">
+                    {stat.value}
                   </span>
-                  <span className="text-sm text-gray-500 dark:text-slate-500">{stat.changeText}</span>
                 </div>
-              </CardContent>
-            </Card>
+
+                {/* Label + change */}
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-gray-400 dark:text-slate-600">
+                    {stat.title}
+                  </span>
+                  <span className="flex items-center gap-1 font-mono text-[10px]" style={{ color: `${stat.accent}bb` }}>
+                    <TrendingUp className="w-2.5 h-2.5" />
+                    {stat.change} {stat.changeText}
+                  </span>
+                </div>
+
+                {/* Bottom glow on hover */}
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ background: `linear-gradient(90deg, transparent, ${stat.accent}, transparent)` }} />
+              </div>
+            </Link>
           )
         })}
       </div>
 
-      {/* Quick actions */}
+      {/* ── Quick actions ── */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="flex items-center gap-4 mb-5">
+          <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-gray-400 dark:text-slate-600 shrink-0">Quick Actions</p>
+          <div className="flex-1 h-px bg-gradient-to-r from-gray-200 dark:from-white/[0.06] to-transparent" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickActions.map((action) => {
             const Icon = action.icon
-            const c    = colorMap[action.color]
             return (
               <Link key={action.title} href={action.href}>
-                <Card className="group cursor-pointer hover:shadow-lg transition-all border-2 border-gray-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-600 dark:bg-slate-800/60">
-                  <CardHeader>
-                    <div className={`w-12 h-12 rounded-lg ${c.bg} ${c.darkBg} ${c.hover} ${c.darkHover} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                      <Icon className={`w-6 h-6 ${c.text} ${c.darkText}`} />
-                    </div>
-                    <CardTitle className="text-lg text-gray-900 dark:text-slate-100">{action.title}</CardTitle>
-                    <CardDescription className="dark:text-slate-400">{action.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button variant="ghost" className="w-full justify-between hover:bg-gray-50 dark:hover:bg-slate-700 dark:text-slate-300">
-                      Go to section
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </CardContent>
-                </Card>
+                <div className="relative group cursor-pointer p-5 transition-all duration-200 hover:-translate-y-0.5
+                  bg-white dark:bg-[#0d1526]
+                  border border-gray-200 dark:border-white/[0.07]
+                  hover:border-gray-300 dark:hover:border-white/[0.12]
+                  shadow-sm dark:shadow-none">
+                  <CardCorners color={action.cornerColor} />
+
+                  <div className="w-10 h-10 flex items-center justify-center rounded-sm mb-4 transition-transform duration-200 group-hover:scale-105"
+                    style={{ background: `${action.accent}12`, border: `1px solid ${action.accent}25` }}>
+                    <Icon className="w-5 h-5" style={{ color: action.accent }} />
+                  </div>
+
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-slate-200 mb-1">{action.title}</h3>
+                  <p className="text-xs text-gray-500 dark:text-slate-600 mb-4 leading-relaxed">{action.description}</p>
+
+                  <div className="flex items-center gap-1.5 font-mono text-[10px] tracking-wider uppercase"
+                    style={{ color: `${action.accent}99` }}>
+                    <span>Go to section</span>
+                    <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-200" />
+                  </div>
+
+                  <div className="absolute bottom-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ background: `linear-gradient(90deg, transparent, ${action.accent}, transparent)` }} />
+                </div>
               </Link>
             )
           })}
         </div>
       </div>
 
-      {/* Recent activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* ── Recent activity ── */}
+      <div>
+        <div className="flex items-center gap-4 mb-5">
+          <p className="font-mono text-[9px] tracking-[0.3em] uppercase text-gray-400 dark:text-slate-600 shrink-0">Recent Activity</p>
+          <div className="flex-1 h-px bg-gradient-to-r from-gray-200 dark:from-white/[0.06] to-transparent" />
+        </div>
 
-        {/* Recent News */}
-        <Card className="dark:bg-slate-800/60 dark:border-slate-700/60">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-slate-100">
-                <Newspaper className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                Recent News
-              </CardTitle>
-              <Link href="/admin/news">
-                <Button variant="ghost" size="sm" className="dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-700">
-                  View all <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+          {/* Recent News */}
+          <div className="relative bg-white dark:bg-[#0d1526] border border-gray-200 dark:border-white/[0.07] shadow-sm dark:shadow-none">
+            <CardCorners color="rgba(59,130,246,0.4)" />
+
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/[0.05]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 flex items-center justify-center rounded-sm"
+                  style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)' }}>
+                  <Newspaper className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" />
+                </div>
+                <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-gray-500 dark:text-slate-400">Recent News</span>
+              </div>
+              <Link href="/admin/news"
+                className="flex items-center gap-1 font-mono text-[9px] tracking-widest uppercase text-gray-400 dark:text-slate-600 hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
+                View all <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
-          </CardHeader>
-          <CardContent>
-            {recentNews.length === 0 ? (
-              <p className="text-gray-500 dark:text-slate-500 text-center py-8">No news articles yet</p>
-            ) : (
-              <div className="space-y-4">
-                {recentNews.map((news) => (
-                  <div key={news.id} className="flex items-start gap-4 pb-4 border-b dark:border-slate-700/60 last:border-0">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 dark:text-slate-100 line-clamp-1">{news.title}</h4>
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${colorMap.blue.badge} ${colorMap.blue.darkBadge}`}>
-                          {news.category}
-                        </span>
-                        <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-500">
-                          <Clock className="w-3 h-3" />
-                          {getTimeAgo(news.created_at)}
-                        </span>
+
+            <div className="p-5">
+              {recentNews.length === 0 ? (
+                <p className="text-gray-400 dark:text-slate-600 text-xs font-mono text-center py-8">No records found</p>
+              ) : (
+                <div className="space-y-4">
+                  {recentNews.map((news, i) => (
+                    <div key={news.id} className={`flex items-start gap-3 pb-4 ${i < recentNews.length - 1 ? 'border-b border-gray-100 dark:border-white/[0.04]' : ''}`}>
+                      <div className="w-px self-stretch mt-1.5 shrink-0"
+                        style={{ background: 'linear-gradient(180deg, rgba(59,130,246,0.5), transparent)' }} />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-medium text-gray-800 dark:text-slate-300 line-clamp-1 mb-2">{news.title}</h4>
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-[9px] tracking-[0.12em] uppercase px-2 py-0.5
+                            text-blue-600 dark:text-blue-400
+                            bg-blue-50 dark:bg-blue-500/10
+                            border border-blue-200 dark:border-blue-500/18">
+                            {news.category}
+                          </span>
+                          <span className="flex items-center gap-1 font-mono text-[9px] text-gray-400 dark:text-slate-600">
+                            <Clock className="w-2.5 h-2.5" />
+                            {getTimeAgo(news.created_at)}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
-        {/* Recent Awards */}
-        <Card className="dark:bg-slate-800/60 dark:border-slate-700/60">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-slate-100">
-                <Award className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                Recent Awards
-              </CardTitle>
-              <Link href="/admin/awards">
-                <Button variant="ghost" size="sm" className="dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-700">
-                  View all <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
+          {/* Recent Awards */}
+          <div className="relative bg-white dark:bg-[#0d1526] border border-gray-200 dark:border-white/[0.07] shadow-sm dark:shadow-none">
+            <CardCorners color="rgba(168,85,247,0.4)" />
+
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/[0.05]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 flex items-center justify-center rounded-sm"
+                  style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)' }}>
+                  <Award className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
+                </div>
+                <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-gray-500 dark:text-slate-400">Recent Awards</span>
+              </div>
+              <Link href="/admin/awards"
+                className="flex items-center gap-1 font-mono text-[9px] tracking-widest uppercase text-gray-400 dark:text-slate-600 hover:text-orange-500 dark:hover:text-orange-400 transition-colors">
+                View all <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
-          </CardHeader>
-          <CardContent>
-            {recentAwards.length === 0 ? (
-              <p className="text-gray-500 dark:text-slate-500 text-center py-8">No awards yet</p>
-            ) : (
-              <div className="space-y-4">
-                {recentAwards.map((award) => (
-                  <div key={award.id} className="flex items-start gap-4 pb-4 border-b dark:border-slate-700/60 last:border-0">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 dark:text-slate-100 line-clamp-1">{award.title}</h4>
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${colorMap.purple.badge} ${colorMap.purple.darkBadge}`}>
-                          {award.year}
-                        </span>
-                        <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-slate-500">
-                          <Clock className="w-3 h-3" />
-                          {getTimeAgo(award.created_at)}
-                        </span>
+
+            <div className="p-5">
+              {recentAwards.length === 0 ? (
+                <p className="text-gray-400 dark:text-slate-600 text-xs font-mono text-center py-8">No records found</p>
+              ) : (
+                <div className="space-y-4">
+                  {recentAwards.map((award, i) => (
+                    <div key={award.id} className={`flex items-start gap-3 pb-4 ${i < recentAwards.length - 1 ? 'border-b border-gray-100 dark:border-white/[0.04]' : ''}`}>
+                      <div className="w-px self-stretch mt-1.5 shrink-0"
+                        style={{ background: 'linear-gradient(180deg, rgba(168,85,247,0.5), transparent)' }} />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-medium text-gray-800 dark:text-slate-300 line-clamp-1 mb-2">{award.title}</h4>
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-[9px] tracking-[0.12em] uppercase px-2 py-0.5
+                            text-purple-600 dark:text-purple-400
+                            bg-purple-50 dark:bg-purple-500/10
+                            border border-purple-200 dark:border-purple-500/18">
+                            {award.year}
+                          </span>
+                          <span className="flex items-center gap-1 font-mono text-[9px] text-gray-400 dark:text-slate-600">
+                            <Clock className="w-2.5 h-2.5" />
+                            {getTimeAgo(award.created_at)}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
 
+        </div>
       </div>
     </div>
   )

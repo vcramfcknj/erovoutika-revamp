@@ -1,29 +1,15 @@
 'use client'
 
 import { Moon, Sun } from 'lucide-react'
+import { useTheme } from '@/components/ThemeProvider'
 import { useEffect, useState } from 'react'
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const { theme, toggleTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
-  useEffect(() => {
-    setMounted(true)
-    const savedTheme = localStorage.getItem('admin-theme') as 'light' | 'dark'
-    if (savedTheme) {
-      setTheme(savedTheme)
-      document.documentElement.classList.toggle('dark', savedTheme === 'dark')
-    }
-  }, [])
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light'
-    setTheme(newTheme)
-    localStorage.setItem('admin-theme', newTheme)
-    document.documentElement.classList.toggle('dark', newTheme === 'dark')
-  }
-
-  if (!mounted) return null
+  useEffect(() => { setMounted(true) }, [])
+  if (!mounted) return <div className="w-10 h-10" />
 
   return (
     <button

@@ -19,15 +19,15 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Upload, X, Link as LinkIcon, Send, Clock, AlertCircle, FileText } from 'lucide-react'
 import Image from 'next/image'
+import RichTextEditor from '@/app/admin/RichTextEditor'  // ← adjust path as needed
 
 type NewsItem = {
   id?: string
   title: string
   excerpt: string
-  content?: string | null   // ← Main Article body
+  content?: string | null
   category: string
   date: string
   image_url: string | null
@@ -44,66 +44,45 @@ type NewsDialogProps = {
 }
 
 const NEWS_CATEGORIES = [
-  'Training & Workshops',
-  'Competition',
-  'Company News',
-  'Partnership',
-  'Product Launch',
-  'Event',
-  'Achievement',
-  'Research & Development'
+  'Training & Workshops', 'Competition', 'Company News', 'Partnership',
+  'Product Launch', 'Event', 'Achievement', 'Research & Development',
 ]
 
 function NewsDialog({ open, onOpenChange, news, onSuccess }: NewsDialogProps) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [uploadingImage, setUploadingImage] = useState(false)
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string>('')
+  const [isLoading,        setIsLoading]        = useState(false)
+  const [uploadingImage,   setUploadingImage]   = useState(false)
+  const [imageFile,        setImageFile]        = useState<File | null>(null)
+  const [imagePreview,     setImagePreview]     = useState<string>('')
   const [scheduledDateTime, setScheduledDateTime] = useState('')
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [errorMessage,     setErrorMessage]     = useState<string | null>(null)
   const [formData, setFormData] = useState<NewsItem>({
-    title: '',
-    excerpt: '',
-    content: '',
-    category: '',
+    title: '', excerpt: '', content: '', category: '',
     date: new Date().toISOString().split('T')[0],
-    image_url: '',
-    url: '',
-    is_published: false,
-    scheduled_date: null,
+    image_url: '', url: '', is_published: false, scheduled_date: null,
   })
 
   useEffect(() => {
     if (news) {
       setFormData({
-        title: news.title,
-        excerpt: news.excerpt,
-        content: news.content ?? '',
-        category: news.category,
-        date: news.date,
-        image_url: news.image_url || '',
-        url: news.url || '',
-        is_published: news.is_published || false,
+        title:         news.title,
+        excerpt:       news.excerpt,
+        content:       news.content ?? '',
+        category:      news.category,
+        date:          news.date,
+        image_url:     news.image_url || '',
+        url:           news.url || '',
+        is_published:  news.is_published || false,
         scheduled_date: news.scheduled_date || null,
       })
       setImagePreview(news.image_url || '')
-      if (news.scheduled_date) {
-        setScheduledDateTime(new Date(news.scheduled_date).toISOString().slice(0, 16))
-      } else {
-        setScheduledDateTime('')
-      }
+      setScheduledDateTime(news.scheduled_date
+        ? new Date(news.scheduled_date).toISOString().slice(0, 16)
+        : '')
     } else {
-      const today = new Date().toISOString().split('T')[0]
       setFormData({
-        title: '',
-        excerpt: '',
-        content: '',
-        category: '',
-        date: today,
-        image_url: '',
-        url: '',
-        is_published: false,
-        scheduled_date: null,
+        title: '', excerpt: '', content: '', category: '',
+        date: new Date().toISOString().split('T')[0],
+        image_url: '', url: '', is_published: false, scheduled_date: null,
       })
       setImagePreview('')
       setScheduledDateTime('')
@@ -114,174 +93,125 @@ function NewsDialog({ open, onOpenChange, news, onSuccess }: NewsDialogProps) {
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setErrorMessage('Image file size must be less than 5MB. Please choose a smaller image.')
-        return
-      }
-      setImageFile(file)
-      const reader = new FileReader()
-      reader.onloadend = () => setImagePreview(reader.result as string)
-      reader.readAsDataURL(file)
-      setErrorMessage(null)
-    }
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) { setErrorMessage('Image must be less than 5MB'); return }
+    setImageFile(file)
+    const reader = new FileReader()
+    reader.onloadend = () => setImagePreview(reader.result as string)
+    reader.readAsDataURL(file)
+    setErrorMessage(null)
   }
 
   const uploadImage = async (file: File): Promise<string> => {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`
-    const { error: uploadError } = await supabase.storage.from('news-images').upload(fileName, file)
-    if (uploadError) throw uploadError
-    const { data } = supabase.storage.from('news-images').getPublicUrl(fileName)
-    return data.publicUrl
+    const ext      = file.name.split('.').pop()
+    const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${ext}`
+    const { error } = await supabase.storage.from('news-images').upload(fileName, file)
+    if (error) throw error
+    return supabase.storage.from('news-images').getPublicUrl(fileName).data.publicUrl
   }
 
-  const validateScheduledDate = (dateTime: string): boolean => {
-    const scheduledDate = new Date(dateTime)
-    const now = new Date()
-    const minimumDate = new Date(now.getTime() + 5 * 60000)
-
-    if (scheduledDate <= now) {
-      const pastBy = Math.round((now.getTime() - scheduledDate.getTime()) / 60000)
-      setErrorMessage(
-        `The scheduled date/time is ${pastBy} minute${pastBy !== 1 ? 's' : ''} in the past. ` +
-        `Please select a future date and time, or use "Publish Now" to publish immediately.`
-      )
-      return false
-    }
-    if (scheduledDate < minimumDate) {
-      setErrorMessage(
-        'The scheduled date/time is too soon. Please select a time at least 5 minutes from now, ' +
-        'or use "Publish Now" to publish immediately.'
-      )
-      return false
-    }
+  const validateScheduledDate = (dt: string): boolean => {
+    const scheduled = new Date(dt)
+    const now       = new Date()
+    if (scheduled <= now) { setErrorMessage('Scheduled date must be in the future'); return false }
+    if (scheduled < new Date(now.getTime() + 5 * 60000)) { setErrorMessage('Must be at least 5 minutes from now'); return false }
     return true
   }
 
   const handleSubmit = async (publishNow: boolean) => {
     setErrorMessage(null)
-
-    if (!formData.title.trim()) { setErrorMessage('Article title is required.'); return }
-    if (!formData.excerpt.trim()) { setErrorMessage('Headline/summary is required.'); return }
-    if (!formData.category) { setErrorMessage('Please select a category.'); return }
-    if (!formData.date) { setErrorMessage('Article date is required.'); return }
-
+    if (!formData.title.trim())   { setErrorMessage('Title is required');    return }
+    if (!formData.excerpt.trim()) { setErrorMessage('Headline is required'); return }
+    if (!formData.category)       { setErrorMessage('Category is required'); return }
+    if (!formData.date)           { setErrorMessage('Date is required');     return }
     if (!publishNow) {
-      if (!scheduledDateTime) {
-        setErrorMessage('Please select a scheduled date and time, or use "Publish Now" to publish immediately.')
-        return
-      }
-      if (!validateScheduledDate(scheduledDateTime)) return
+      if (!scheduledDateTime)                           { setErrorMessage('Select a scheduled time or use Publish Now'); return }
+      if (!validateScheduledDate(scheduledDateTime))    return
     }
 
     setIsLoading(true)
-
     try {
-      let imageUrl = formData.image_url
-      if (imageFile) {
-        setUploadingImage(true)
-        imageUrl = await uploadImage(imageFile)
-        setUploadingImage(false)
-      }
+      let imageUrl = formData.image_url as string
+      if (imageFile) { setUploadingImage(true); imageUrl = await uploadImage(imageFile); setUploadingImage(false) }
 
-      const dataToSave = {
-        title: formData.title.trim(),
-        excerpt: formData.excerpt.trim(),
-        content: formData.content?.trim() || null,
-        category: formData.category,
-        date: formData.date,
-        image_url: imageUrl,
-        url: formData.url?.trim() || null,
-        is_published: publishNow,
-        scheduled_date: (!publishNow && scheduledDateTime)
-          ? new Date(scheduledDateTime).toISOString()
-          : null,
+      const payload = {
+        title:          formData.title.trim(),
+        excerpt:        formData.excerpt.trim(),
+        content:        formData.content?.trim() || null,  // ← HTML string from Tiptap
+        category:       formData.category,
+        date:           formData.date,
+        image_url:      imageUrl,
+        url:            formData.url?.trim() || null,
+        is_published:   publishNow,
+        scheduled_date: (!publishNow && scheduledDateTime) ? new Date(scheduledDateTime).toISOString() : null,
       }
 
       if (news?.id) {
-        const { error } = await supabase
-          .from('news_updates')
-          .update({ ...dataToSave, updated_at: new Date().toISOString() })
-          .eq('id', news.id)
+        const { error } = await supabase.from('news_updates').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', news.id)
         if (error) throw error
       } else {
-        const { error } = await supabase.from('news_updates').insert([dataToSave])
+        const { error } = await supabase.from('news_updates').insert([payload])
         if (error) throw error
       }
 
       onSuccess()
       onOpenChange(false)
-    } catch (error: unknown) {
-      console.error('Error saving news:', error)
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : 'Failed to save the article. Please check your connection and try again.'
-      )
+    } catch (err: unknown) {
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to save article')
     } finally {
       setIsLoading(false)
       setUploadingImage(false)
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
     setErrorMessage(null)
   }
 
-  const handleCategoryChange = (value: string) => {
-    setFormData({ ...formData, category: value })
-    setErrorMessage(null)
-  }
-
-  const removeImage = () => {
-    setImageFile(null)
-    setImagePreview('')
-    setFormData({ ...formData, image_url: '' })
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-full p-0 gap-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-200">
-          <DialogTitle>{news ? 'Edit News Article' : 'Add News Article'}</DialogTitle>
-          <DialogDescription>
-            {news
-              ? 'Update the news article details below.'
-              : 'Fill in the details to create a new news article.'}
+      <DialogContent className="max-w-3xl w-full p-0 gap-0 overflow-hidden bg-white dark:bg-[#0a1020] border border-gray-200 dark:border-white/[0.08]">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-200 dark:border-white/[0.07]">
+          <DialogTitle className="text-gray-900 dark:text-slate-100">
+            {news ? 'Edit News Article' : 'Add News Article'}
+          </DialogTitle>
+          <DialogDescription className="text-gray-500 dark:text-slate-500 text-sm">
+            {news ? 'Update the article details below.' : 'Fill in the details to create a new article.'}
           </DialogDescription>
         </DialogHeader>
 
         {errorMessage && (
-          <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-            <p className="text-sm text-red-800">{errorMessage}</p>
+          <div className="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-500/20 rounded flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700 dark:text-red-400">{errorMessage}</p>
           </div>
         )}
 
-        <div className="px-6 py-4 space-y-4 max-h-[calc(100vh-250px)] overflow-y-auto">
+        <div className="px-6 py-4 space-y-4 max-h-[calc(100vh-220px)] overflow-y-auto">
 
-          {/* Image Upload + Title/URL Row */}
+          {/* Image + Title/URL row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-sm">Cover Image</Label>
+              <Label className="text-sm text-gray-700 dark:text-slate-300">Cover Image</Label>
               {imagePreview ? (
-                <div className="relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden group">
+                <div className="relative w-full h-32 rounded overflow-hidden group border border-gray-200 dark:border-white/[0.07]">
                   <Image src={imagePreview} alt="Preview" fill className="object-cover" />
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
+                  <button type="button" onClick={() => { setImageFile(null); setImagePreview(''); setFormData(f => ({ ...f, image_url: '' })) }}
+                    className="absolute top-1.5 right-1.5 p-1 bg-red-500 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity">
                     <X className="w-3 h-3" />
                   </button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-orange-50 hover:border-orange-300 transition-colors">
-                  <Upload className="w-6 h-6 text-gray-400 mb-1" />
-                  <p className="text-xs text-gray-500 text-center">
-                    <span className="font-semibold">Click to upload</span><br />PNG, JPG up to 5MB
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded cursor-pointer
+                  border-gray-300 dark:border-white/[0.1]
+                  bg-gray-50 dark:bg-white/[0.02]
+                  hover:bg-orange-50 dark:hover:bg-orange-500/[0.04]
+                  hover:border-orange-300 dark:hover:border-orange-500/40
+                  transition-colors">
+                  <Upload className="w-5 h-5 text-gray-400 dark:text-slate-500 mb-1" />
+                  <p className="text-xs text-gray-500 dark:text-slate-500 text-center">
+                    <span className="font-semibold">Click to upload</span><br />PNG, JPG · max 5MB
                   </p>
                   <input type="file" className="hidden" accept="image/*" onChange={handleImageSelect} disabled={isLoading} />
                 </label>
@@ -290,26 +220,18 @@ function NewsDialog({ open, onOpenChange, news, onSuccess }: NewsDialogProps) {
 
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="title" className="text-sm">Title *</Label>
-                <Input
-                  id="title" name="title"
-                  value={formData.title} onChange={handleChange}
-                  required placeholder="Enter news title"
-                  disabled={isLoading} className="h-9 text-sm"
-                  suppressHydrationWarning
-                />
+                <Label htmlFor="d-title" className="text-sm text-gray-700 dark:text-slate-300">Title *</Label>
+                <Input id="d-title" name="title" value={formData.title} onChange={handleChange}
+                  placeholder="Article title" disabled={isLoading}
+                  className="h-9 text-sm bg-white dark:bg-white/[0.03] border-gray-200 dark:border-white/[0.08] text-gray-900 dark:text-slate-200" />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="url" className="text-sm">Article URL</Label>
+                <Label htmlFor="d-url" className="text-sm text-gray-700 dark:text-slate-300">Source URL</Label>
                 <div className="relative">
-                  <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
-                  <Input
-                    id="url" name="url" type="url"
-                    value={formData.url} onChange={handleChange}
-                    placeholder="https://example.com/article"
-                    disabled={isLoading} className="pl-9 h-9 text-sm"
-                    suppressHydrationWarning
-                  />
+                  <LinkIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-slate-500" />
+                  <Input id="d-url" name="url" type="url" value={formData.url} onChange={handleChange}
+                    placeholder="https://..." disabled={isLoading}
+                    className="pl-8 h-9 text-sm bg-white dark:bg-white/[0.03] border-gray-200 dark:border-white/[0.08] text-gray-900 dark:text-slate-200" />
                 </div>
               </div>
             </div>
@@ -317,106 +239,93 @@ function NewsDialog({ open, onOpenChange, news, onSuccess }: NewsDialogProps) {
 
           {/* Headline */}
           <div className="space-y-1.5">
-            <Label htmlFor="excerpt" className="text-sm">Headline *</Label>
-            <Textarea
-              id="excerpt" name="excerpt"
-              value={formData.excerpt} onChange={handleChange}
-              required placeholder="Brief headline or summary shown on the news card…"
-              rows={2} disabled={isLoading} className="text-sm resize-none"
+            <Label htmlFor="d-excerpt" className="text-sm text-gray-700 dark:text-slate-300">Headline / Summary *</Label>
+            <textarea
+              id="d-excerpt" name="excerpt" rows={2}
+              value={formData.excerpt}
+              onChange={(e) => { setFormData(f => ({ ...f, excerpt: e.target.value })); setErrorMessage(null) }}
+              placeholder="Brief summary shown on cards..."
+              disabled={isLoading}
+              className="w-full rounded border px-3 py-2 text-sm resize-none
+                bg-white dark:bg-white/[0.03]
+                border-gray-200 dark:border-white/[0.08]
+                text-gray-900 dark:text-slate-200
+                placeholder:text-gray-400 dark:placeholder:text-slate-600
+                focus:outline-none focus:ring-1 focus:ring-orange-400/40 focus:border-orange-400 dark:focus:border-orange-500/60"
             />
           </div>
 
-          {/* ── Main Article ── */}
+          {/* ── Tiptap rich text editor ── */}
           <div className="space-y-1.5">
-            <Label htmlFor="content" className="text-sm flex items-center gap-2">
-              <FileText className="w-3.5 h-3.5 text-gray-500" />
-              Main Article
-              <span className="text-xs font-normal text-gray-400 ml-1">
-                — displayed when readers open the article
-              </span>
+            <Label className="text-sm text-gray-700 dark:text-slate-300 flex items-center gap-2">
+              <FileText className="w-3.5 h-3.5" />
+              Full Article Content
+              <span className="text-xs font-normal text-gray-400 dark:text-slate-600">— shown when readers open the article</span>
             </Label>
-            <Textarea
-              id="content" name="content"
+            <RichTextEditor
               value={formData.content ?? ''}
-              onChange={handleChange}
-              placeholder="Write the full article body here. Readers will see this when they click to open the article…"
-              rows={7}
+              onChange={(html) => setFormData(f => ({ ...f, content: html }))}
+              placeholder="Write the full article body here..."
               disabled={isLoading}
-              className="text-sm resize-y leading-relaxed"
             />
           </div>
 
           {/* Category + Date */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-sm">Category *</Label>
-              <Select value={formData.category} onValueChange={handleCategoryChange} disabled={isLoading}>
-                <SelectTrigger className="h-9 text-sm">
+              <Label className="text-sm text-gray-700 dark:text-slate-300">Category *</Label>
+              <Select value={formData.category} onValueChange={(v) => { setFormData(f => ({ ...f, category: v })); setErrorMessage(null) }} disabled={isLoading}>
+                <SelectTrigger className="h-9 text-sm bg-white dark:bg-white/[0.03] border-gray-200 dark:border-white/[0.08]">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {NEWS_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
+                  {NEWS_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="date" className="text-sm">Article Date *</Label>
-              <Input
-                id="date" name="date" type="date"
-                value={formData.date} onChange={handleChange}
-                required disabled={isLoading} className="h-9 text-sm"
-                suppressHydrationWarning
-              />
+              <Label htmlFor="d-date" className="text-sm text-gray-700 dark:text-slate-300">Article Date *</Label>
+              <Input id="d-date" name="date" type="date" value={formData.date} onChange={handleChange}
+                disabled={isLoading}
+                className="h-9 text-sm bg-white dark:bg-white/[0.03] border-gray-200 dark:border-white/[0.08] text-gray-900 dark:text-slate-200" />
             </div>
           </div>
 
           {/* Schedule */}
-          <div className="space-y-1.5 p-3 bg-orange-50 rounded-lg border border-orange-200">
-            <Label htmlFor="scheduled_date" className="text-sm font-medium text-orange-900 flex items-center gap-2">
-              <Clock className="w-4 h-4" />
+          <div className="p-3 rounded border
+            bg-orange-50 dark:bg-orange-500/[0.05]
+            border-orange-200 dark:border-orange-500/20">
+            <Label htmlFor="d-schedule" className="text-sm font-medium flex items-center gap-2 mb-2 text-orange-900 dark:text-orange-400">
+              <Clock className="w-3.5 h-3.5" />
               Schedule Publishing (Optional)
             </Label>
-            <Input
-              id="scheduled_date" type="datetime-local"
+            <Input id="d-schedule" type="datetime-local"
               value={scheduledDateTime}
               onChange={(e) => { setScheduledDateTime(e.target.value); setErrorMessage(null) }}
               min={new Date(Date.now() + 5 * 60000).toISOString().slice(0, 16)}
               disabled={isLoading}
-              className="h-9 text-sm border-orange-300 focus:border-orange-500"
-              suppressHydrationWarning
-            />
-            <p className="text-xs text-orange-700">
-              Set a future date/time to schedule publication, or leave empty to publish now
-            </p>
+              className="h-9 text-sm border-orange-300 dark:border-orange-500/30 bg-white dark:bg-white/[0.03] text-gray-900 dark:text-slate-200" />
+            <p className="text-xs text-orange-700 dark:text-orange-500/80 mt-1.5">Leave empty to publish immediately</p>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading} size="sm">
+        <div className="flex justify-between items-center px-6 py-4 border-t border-gray-200 dark:border-white/[0.07] bg-gray-50 dark:bg-white/[0.02]">
+          <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={isLoading}
+            className="border-gray-200 dark:border-white/[0.08] text-gray-600 dark:text-slate-400">
             Cancel
           </Button>
           <div className="flex gap-2">
-            <Button
-              type="button"
-              onClick={() => handleSubmit(false)}
+            <Button type="button" size="sm" onClick={() => handleSubmit(false)}
               disabled={isLoading || uploadingImage || !scheduledDateTime}
-              size="sm"
-              className="bg-orange-600 hover:bg-orange-700 text-white"
-            >
-              <Clock className="w-4 h-4 mr-1" />
-              {uploadingImage ? 'Uploading...' : isLoading ? 'Saving...' : 'Schedule'}
+              className="bg-orange-500 hover:bg-orange-600 text-white">
+              <Clock className="w-3.5 h-3.5 mr-1.5" />
+              {isLoading ? 'Saving...' : 'Schedule'}
             </Button>
-            <Button
-              type="button"
-              onClick={() => handleSubmit(true)}
+            <Button type="button" size="sm" onClick={() => handleSubmit(true)}
               disabled={isLoading || uploadingImage}
-              size="sm"
-              className="bg-blue-600 hover:bg-orange-600 transition-colors"
-            >
-              <Send className="w-4 h-4 mr-1" />
+              className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Send className="w-3.5 h-3.5 mr-1.5" />
               {uploadingImage ? 'Uploading...' : isLoading ? 'Publishing...' : 'Publish Now'}
             </Button>
           </div>
